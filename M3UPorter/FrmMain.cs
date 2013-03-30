@@ -113,11 +113,17 @@ namespace M3UPorter
                     String line = "";
                     int i = 1;
                     while((line = sr.ReadLine()) != null) { 
-                        if (!line.StartsWith("#") && !line.StartsWith("http")) { 
+                        if (!line.StartsWith("#") && !line.StartsWith("http")) {
+
+                            // Convert relative paths to absolute if necessary
+                            if (!System.IO.Path.IsPathRooted(line))
+                            {
+                                line = System.IO.Path.GetDirectoryName(txtM3UPath.Text) + System.IO.Path.DirectorySeparatorChar + line;
+                            }
                             String prefix;
                             if (cbPrependNum.Checked) { prefix = i.ToString("D3") + " - "; } else { prefix = ""; }
-                            
-                            String destination = txtOutputDir.Text + "\\" + prefix + System.IO.Path.GetFileName(line);
+
+                            String destination = txtOutputDir.Text + System.IO.Path.DirectorySeparatorChar + prefix + System.IO.Path.GetFileName(line);
                             
                             if ( cbMoveFiles.Checked ) { 
                                 System.IO.File.Move(line, destination);
@@ -135,7 +141,7 @@ namespace M3UPorter
             }
             catch (Exception e)
             {
-                MessageBox.Show("The playlist file could not be read");
+                MessageBox.Show("The playlist file could not be read" + e.ToString());
             }
         }
     }
