@@ -6,6 +6,7 @@ It makes an effort to be quick and offer the most often requested functionality.
 Build on an afternoon of frustration because I just couldn't find a tool to do 
 this that worked on Windows 7.
 
+You can find a compiled version of the app on my site, [here](http://www.hexblot.com/project/code/m3uporter-simple-app-move-winamp-playlist-files)
 Manual
 =========
 
