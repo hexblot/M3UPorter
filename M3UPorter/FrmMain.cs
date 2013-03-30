@@ -108,7 +108,7 @@ namespace M3UPorter
 
             try
             {
-                using (StreamReader sr = new StreamReader(txtM3UPath.Text))
+                using (StreamReader sr = new StreamReader(txtM3UPath.Text, Encoding.Default))
                 {
                     String line = "";
                     int i = 1;
