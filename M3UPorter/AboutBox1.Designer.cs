@@ -54,7 +54,7 @@
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(158, 20);
             this.label1.TabIndex = 1;
-            this.label1.Text = "M3U Porter v.0.9 b";
+            this.label1.Text = "M3U Porter v.1.0.4";
             // 
             // label2
             // 

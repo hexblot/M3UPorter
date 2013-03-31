@@ -102,19 +102,38 @@ namespace M3UPorter
             e.Cancel = true;
         }
 
+        private void switch_state()
+        {
+            // Switches from progress bar state to control state
+            grpStep1.Visible = !grpStep1.Visible;
+            grpStep2.Visible = !grpStep2.Visible;
+            grpStep3.Visible = !grpStep3.Visible;
+            pgbProgress.Visible = !pgbProgress.Visible;
+            lblProgress.Visible = !lblProgress.Visible;
+            pbS1D.Visible = !pbS1D.Visible;
+            pbS2D.Visible = !pbS2D.Visible;
+            pbS3A.Visible = !pbS3A.Visible;
+        }
+
         private void btnGo_Click(object sender, EventArgs ea)
         {
             btnGo.Enabled = false;
+            // First process the playlist file
+            Dictionary<string, string> tasks = new Dictionary<string, string>();
+            switch_state();
 
             try
             {
                 using (StreamReader sr = new StreamReader(txtM3UPath.Text, Encoding.Default))
                 {
                     String line = "";
-                    int i = 1;
-                    while((line = sr.ReadLine()) != null) { 
-                        if (!line.StartsWith("#") && !line.StartsWith("http")) {
+                    
 
+                    int i = 1;
+                    while ((line = sr.ReadLine()) != null)
+                    {
+                        if (!line.StartsWith("#") && !line.StartsWith("http"))
+                        {
                             // Convert relative paths to absolute if necessary
                             if (!System.IO.Path.IsPathRooted(line))
                             {
@@ -124,25 +143,69 @@ namespace M3UPorter
                             if (cbPrependNum.Checked) { prefix = i.ToString("D3") + " - "; } else { prefix = ""; }
 
                             String destination = txtOutputDir.Text + System.IO.Path.DirectorySeparatorChar + prefix + System.IO.Path.GetFileName(line);
-                            
-                            if ( cbMoveFiles.Checked ) { 
-                                System.IO.File.Move(line, destination);
-                            } else {
-                                System.IO.File.Copy(line, destination, true);
-                            }
+                            i++;
 
-                            i++;                            
+                            tasks.Add(line, destination);
                         }
-                    }
-
-                    btnGo.Enabled = true;
-                    MessageBox.Show("Operation complete!");
+                    }                       
                 }
+
+                pgbProgress.Value = 10;
+
             }
             catch (Exception e)
             {
                 MessageBox.Show("The playlist file could not be read" + e.ToString());
             }
+
+            // Create a background worker to prevent "Not responsive" when writing to slow media such as USB sticks
+            BackgroundWorker bw = new BackgroundWorker();
+            bw.WorkerReportsProgress = true;
+
+
+            bw.DoWork += new DoWorkEventHandler(
+            delegate(object o, DoWorkEventArgs args)
+            {
+                BackgroundWorker b = o as BackgroundWorker;
+                int total = tasks.Count;
+                int i = 1;
+
+                foreach (KeyValuePair<string, string> pair in tasks)
+                {
+                    if (cbMoveFiles.Checked)
+                    {
+                        System.IO.File.Move(pair.Key, pair.Value);
+                    }
+                    else
+                    {
+                        System.IO.File.Copy(pair.Key, pair.Value, true);
+                    }
+                    int progress = (int) (((float)i / (float) total) * 90);
+                    b.ReportProgress(progress); 
+                    i++;
+                }
+                
+            });
+
+            // what to do when progress changed (update the progress bar for example)
+            bw.ProgressChanged += new ProgressChangedEventHandler(
+            delegate(object o, ProgressChangedEventArgs args)
+            {
+                pgbProgress.Value = args.ProgressPercentage+10;
+            });
+
+            // what to do when worker completes its task (notify the user)
+            bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler(
+            delegate(object o, RunWorkerCompletedEventArgs args)
+            {
+                btnGo.Enabled = true;
+                switch_state();
+                MessageBox.Show("Operation complete!");
+            });
+
+            bw.RunWorkerAsync();
+
+                 
         }
     }
 }

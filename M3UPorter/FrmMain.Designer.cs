@@ -48,6 +48,8 @@
             this.cbMoveFiles = new System.Windows.Forms.CheckBox();
             this.btnGo = new System.Windows.Forms.Button();
             this.grpStep3 = new System.Windows.Forms.GroupBox();
+            this.pgbProgress = new System.Windows.Forms.ProgressBar();
+            this.lblProgress = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.pbS1A)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbS3A)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbS3D)).BeginInit();
@@ -236,6 +238,26 @@
             this.grpStep3.TabStop = false;
             this.grpStep3.Text = "Step 3. Select options and run";
             // 
+            // pgbProgress
+            // 
+            this.pgbProgress.Location = new System.Drawing.Point(12, 170);
+            this.pgbProgress.Name = "pgbProgress";
+            this.pgbProgress.Size = new System.Drawing.Size(330, 23);
+            this.pgbProgress.Step = 1;
+            this.pgbProgress.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this.pgbProgress.TabIndex = 11;
+            this.pgbProgress.Visible = false;
+            // 
+            // lblProgress
+            // 
+            this.lblProgress.AutoSize = true;
+            this.lblProgress.Location = new System.Drawing.Point(12, 152);
+            this.lblProgress.Name = "lblProgress";
+            this.lblProgress.Size = new System.Drawing.Size(172, 13);
+            this.lblProgress.TabIndex = 12;
+            this.lblProgress.Text = "Please wait, performing operation...";
+            this.lblProgress.Visible = false;
+            // 
             // FrmMain
             // 
             this.AllowDrop = true;
@@ -251,6 +273,8 @@
             this.Controls.Add(this.pbS1A);
             this.Controls.Add(this.pbS1D);
             this.Controls.Add(this.pbS2D);
+            this.Controls.Add(this.pgbProgress);
+            this.Controls.Add(this.lblProgress);
             this.HelpButton = true;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
@@ -275,6 +299,7 @@
             this.grpStep3.ResumeLayout(false);
             this.grpStep3.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -299,6 +324,8 @@
         private System.Windows.Forms.CheckBox cbMoveFiles;
         private System.Windows.Forms.Button btnGo;
         private System.Windows.Forms.GroupBox grpStep3;
+        private System.Windows.Forms.ProgressBar pgbProgress;
+        private System.Windows.Forms.Label lblProgress;
     }
 }
 
