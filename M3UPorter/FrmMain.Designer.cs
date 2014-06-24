@@ -125,8 +125,8 @@
             // 
             // openFileDialog1
             // 
-            this.openFileDialog1.DefaultExt = "m3u";
-            this.openFileDialog1.Filter = "M3U Playlists|*.m3u";
+            this.openFileDialog1.DefaultExt = "m3u8";
+            this.openFileDialog1.Filter = "M3U8 Playlists|*.m3u8";
             this.openFileDialog1.Title = "Select M3U Playlist";
             // 
             // btnOutputDir

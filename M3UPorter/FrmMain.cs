@@ -47,7 +47,8 @@ namespace M3UPorter
 
                 foreach (string filename in filenames) {
                     //MessageBox.Show(System.IO.Path.GetExtension(filename).ToUpperInvariant());
-                    if (System.IO.Path.GetExtension(filename).ToUpperInvariant() != ".M3U") {
+                    if (System.IO.Path.GetExtension(filename).ToUpperInvariant() != ".M3U" || System.IO.Path.GetExtension(filename).ToUpperInvariant() != ".M3U8")
+                    {
                         dropEnabled = false;
                         break;
                     }
@@ -124,11 +125,10 @@ namespace M3UPorter
 
             try
             {
-                using (StreamReader sr = new StreamReader(txtM3UPath.Text, Encoding.Default))
+                using (StreamReader sr = new StreamReader(txtM3UPath.Text, System.Text.Encoding.UTF8, true))
                 {
                     String line = "";
                     
-
                     int i = 1;
                     while ((line = sr.ReadLine()) != null)
                     {
@@ -172,13 +172,20 @@ namespace M3UPorter
 
                 foreach (KeyValuePair<string, string> pair in tasks)
                 {
-                    if (cbMoveFiles.Checked)
+                    try
                     {
-                        System.IO.File.Move(pair.Key, pair.Value);
+                        if (cbMoveFiles.Checked)
+                        {
+                            System.IO.File.Move(pair.Key, pair.Value);
+                        }
+                        else
+                        {
+                            System.IO.File.Copy(pair.Key, pair.Value, true);
+                        }
                     }
-                    else
+                    catch (FileNotFoundException e)
                     {
-                        System.IO.File.Copy(pair.Key, pair.Value, true);
+                        // Do nothing, just skip the file
                     }
                     int progress = (int) (((float)i / (float) total) * 90);
                     b.ReportProgress(progress); 
