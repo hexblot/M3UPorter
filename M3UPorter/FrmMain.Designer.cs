@@ -41,6 +41,7 @@
             this.txtOutputDir = new System.Windows.Forms.TextBox();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.grpStep2 = new System.Windows.Forms.GroupBox();
+            this.lblProgressText = new System.Windows.Forms.Label();
             this.pbS2D = new System.Windows.Forms.PictureBox();
             this.pbS2A = new System.Windows.Forms.PictureBox();
             this.grpStep1 = new System.Windows.Forms.GroupBox();
@@ -126,7 +127,7 @@
             // openFileDialog1
             // 
             this.openFileDialog1.DefaultExt = "m3u8";
-            this.openFileDialog1.Filter = "M3U8 Playlists|*.m3u8";
+            this.openFileDialog1.Filter = "M3U(8) Playlists|*.m3u8;*.m3u|All files (*.*)|*.*";
             this.openFileDialog1.Title = "Select M3U Playlist";
             // 
             // btnOutputDir
@@ -161,6 +162,16 @@
             this.grpStep2.TabIndex = 7;
             this.grpStep2.TabStop = false;
             this.grpStep2.Text = "Step 2. Select output location";
+            // 
+            // lblProgressText
+            // 
+            this.lblProgressText.Location = new System.Drawing.Point(12, 200);
+            this.lblProgressText.Name = "lblProgressText";
+            this.lblProgressText.Size = new System.Drawing.Size(330, 19);
+            this.lblProgressText.TabIndex = 13;
+            this.lblProgressText.Text = "progress";
+            this.lblProgressText.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.lblProgressText.Visible = false;
             // 
             // pbS2D
             // 
@@ -264,6 +275,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(354, 387);
+            this.Controls.Add(this.lblProgressText);
             this.Controls.Add(this.grpStep1);
             this.Controls.Add(this.pbS2A);
             this.Controls.Add(this.grpStep2);
@@ -326,6 +338,7 @@
         private System.Windows.Forms.GroupBox grpStep3;
         private System.Windows.Forms.ProgressBar pgbProgress;
         private System.Windows.Forms.Label lblProgress;
+        private System.Windows.Forms.Label lblProgressText;
     }
 }
 
