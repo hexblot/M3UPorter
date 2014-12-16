@@ -89,18 +89,35 @@ namespace M3UPorter
 
         private void btnLoadFile_Click(object sender, EventArgs e)
         {
-           openFileDialog1.FileName = txtM3UPath.Text;
-           DialogResult result = openFileDialog1.ShowDialog();
-           if (result == DialogResult.OK)
-           {
-               txtM3UPath.Text = openFileDialog1.FileName;
-               pbS1A.Visible = false;
-               pbS1D.Visible = true;
-               if (pbS2D.Visible) { 
-                   pbS3A.Visible = true;
-                   grpStep3.Enabled = true;
-               }
-           }
+            try
+            {
+                openFileDialog1.FileName = Path.GetFileName(txtM3UPath.Text);
+            }
+            catch (Exception)
+            {
+                openFileDialog1.FileName = "";
+            }
+
+            try
+            {
+                openFileDialog1.InitialDirectory = Path.GetDirectoryName(txtM3UPath.Text);
+            }
+            catch (Exception)
+            {
+            }
+
+            DialogResult result = openFileDialog1.ShowDialog();
+            if (result == DialogResult.OK)
+            {
+                txtM3UPath.Text = openFileDialog1.FileName;
+                pbS1A.Visible = false;
+                pbS1D.Visible = true;
+                if (pbS2D.Visible)
+                {
+                    pbS3A.Visible = true;
+                    grpStep3.Enabled = true;
+                }
+            }
         }
 
         private void btnOutputDir_Click(object sender, EventArgs e)
@@ -280,7 +297,7 @@ namespace M3UPorter
                 int progress = (int)(((float)i / (float)total) * 90);
                 try
                 {
-                    if (cbMoveFiles.Checked)
+                    if (cbMoveFiles.Checked) // TODO: this is probably not thread safe
                     {
                         System.IO.File.Move(pair.Left, pair.Right);
                     }
