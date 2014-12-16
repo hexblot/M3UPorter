@@ -10,15 +10,37 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+using M3UPorter.Properties; // for Settings
+
 namespace M3UPorter
 {
     public partial class FrmMain : Form
     {
+        // Interesting IOException HRESULT codes
+        protected static readonly int ERROR_DISK_FULL = (0x70);
+
         public FrmMain()
         {
             InitializeComponent();
             pbS1A.Visible = true;
             pbS2A.Visible = true;
+
+            LoadSettings();
+        }
+
+        private void LoadSettings()
+        {
+            txtM3UPath.Text = Settings.Default.LastPlaylistFilePath;
+            txtOutputDir.Text = Settings.Default.LastOutputPath;
+            cbPrependNum.Checked = Settings.Default.DoPrependNumber;
+        }
+
+        private void SaveSettings()
+        {
+            Settings.Default.LastPlaylistFilePath = txtM3UPath.Text;
+            Settings.Default.LastOutputPath = txtOutputDir.Text;
+            Settings.Default.DoPrependNumber = cbPrependNum.Checked;
+            Settings.Default.Save();
         }
 
         private void FrmMain_DragDrop(object sender, DragEventArgs e)
@@ -67,6 +89,7 @@ namespace M3UPorter
 
         private void btnLoadFile_Click(object sender, EventArgs e)
         {
+           openFileDialog1.FileName = txtM3UPath.Text;
            DialogResult result = openFileDialog1.ShowDialog();
            if (result == DialogResult.OK)
            {
@@ -82,6 +105,7 @@ namespace M3UPorter
 
         private void btnOutputDir_Click(object sender, EventArgs e)
         {
+            folderBrowserDialog1.SelectedPath = txtOutputDir.Text;
             DialogResult result = folderBrowserDialog1.ShowDialog();
             if (result == DialogResult.OK)
             {
@@ -120,6 +144,8 @@ namespace M3UPorter
 
         private void btnGo_Click(object sender, EventArgs ea)
         {
+            SaveSettings();
+
             btnGo.Enabled = false;
             // First process the playlist file
             List<Pair<String, String> > tasks = new List<Pair<String, String> >();
@@ -199,36 +225,7 @@ namespace M3UPorter
             bw.WorkerReportsProgress = true;
 
 
-            bw.DoWork += new DoWorkEventHandler(
-            delegate(object o, DoWorkEventArgs args)
-            {
-                BackgroundWorker b = o as BackgroundWorker;
-                int total = tasks.Count;
-                int i = 1;
-
-                foreach (Pair<string, string> pair in tasks)
-                {
-                    try
-                    {
-                        if (cbMoveFiles.Checked)
-                        {
-                            System.IO.File.Move(pair.Left, pair.Right);
-                        }
-                        else
-                        {
-                            System.IO.File.Copy(pair.Left, pair.Right, true);
-                        }
-                    }
-                    catch (FileNotFoundException)
-                    {
-                        // Do nothing, just skip the file
-                    }
-                    int progress = (int) (((float)i / (float) total) * 90);
-                    b.ReportProgress(progress, String.Format("{0}/{1}", i, total)); 
-                    i++;
-                }
-                
-            });
+            bw.DoWork += new DoWorkEventHandler( DoWork );
 
             // what to do when progress changed (update the progress bar for example)
             bw.ProgressChanged += new ProgressChangedEventHandler(
@@ -240,17 +237,86 @@ namespace M3UPorter
             });
 
             // what to do when worker completes its task (notify the user)
-            bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler(
-            delegate(object o, RunWorkerCompletedEventArgs args)
-            {
-                btnGo.Enabled = true;
-                switch_state();
-                MessageBox.Show("Operation complete!");
-            });
+            bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler(WorkerCompleted);
 
-            bw.RunWorkerAsync();
-
-                 
+            bw.RunWorkerAsync(tasks);
         }
+
+        void WorkerCompleted(object o, RunWorkerCompletedEventArgs args)
+        {
+            btnGo.Enabled = true;
+            switch_state();
+
+            if (args.Cancelled)
+            {
+                // The user canceled the operation. The user knows this, so don't report it.
+            }
+            else if (args.Error != null)
+            {
+                // There was an error during the operation. 
+                string msg = String.Format("Error: {0}", args.Error.Message);
+                MessageBox.Show(msg);
+            }
+            else
+            {
+                MessageBox.Show("Operation complete!");
+            }
+        }
+
+        /// <summary>
+        /// Background file copy delegate
+        /// </summary>
+        void DoWork(object o, DoWorkEventArgs args)
+        {
+            List<Pair<String,String> > tasks = (List<Pair<String,String> >)args.Argument;
+            BackgroundWorker bw = o as BackgroundWorker;
+            int total = tasks.Count;
+            int i = 0;
+
+            foreach (Pair<string, string> pair in tasks)
+            {
+
+                i++;
+                int progress = (int)(((float)i / (float)total) * 90);
+                try
+                {
+                    if (cbMoveFiles.Checked)
+                    {
+                        System.IO.File.Move(pair.Left, pair.Right);
+                    }
+                    else
+                    {
+                        System.IO.File.Copy(pair.Left, pair.Right, true);
+                    }
+                    bw.ReportProgress(progress, String.Format("{0}/{1}", i, total));
+                }
+                catch (FileNotFoundException)
+                {
+                    // Do nothing, just skip the file
+                    bw.ReportProgress(progress, String.Format("{0}/{1} (missing)", i, total));
+                }
+                catch (IOException ioe)
+                {
+                    bw.ReportProgress(progress, String.Format("{0}/{1} (IO error)", i, total));
+
+                    // delete the output file if it exists
+                    File.Delete(pair.Right);
+
+                    // If it's an "out of space" exception, exit quietly
+                    if ((ioe.HResult & 0xffff) == ERROR_DISK_FULL)
+                        break;
+
+                    throw;
+                }
+                catch (Exception)
+                {
+                    bw.ReportProgress(progress, String.Format("{0}/{1} (error)", i, total));
+
+                    // delete the output file on the assumption that it's incomplete
+                    File.Delete(pair.Right);
+                }
+            }
+        }                
     }
 }
+
