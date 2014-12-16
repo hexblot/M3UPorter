@@ -19,13 +19,36 @@ namespace M3UPorter
         // Interesting IOException HRESULT codes
         protected static readonly int ERROR_DISK_FULL = (0x70);
 
+        readonly BackgroundWorker bw;
+
         public FrmMain()
         {
             InitializeComponent();
             pbS1A.Visible = true;
             pbS2A.Visible = true;
 
+            optionsForm.Show();
+            progressForm.Hide();
+
             LoadSettings();
+
+            // Create a background worker to prevent "Not responsive" when writing to slow media such as USB sticks
+            bw = new BackgroundWorker();
+            bw.WorkerReportsProgress = true;
+            bw.WorkerSupportsCancellation = true;
+            bw.DoWork += new DoWorkEventHandler(DoWork);
+
+            // what to do when progress changed (update the progress bar for example)
+            bw.ProgressChanged += new ProgressChangedEventHandler(
+            delegate(object o, ProgressChangedEventArgs args)
+            {
+                pgbProgress.Value = args.ProgressPercentage + 10;
+                if (null != args.UserState)
+                    lblProgressText.Text = (String)args.UserState;
+            });
+
+            // what to do when worker completes its task (notify the user)
+            bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler(WorkerCompleted);
         }
 
         private void LoadSettings()
@@ -56,7 +79,6 @@ namespace M3UPorter
                     pbS3A.Visible = true;
                     grpStep3.Enabled = true;
                 }
-
             }
         }
 
@@ -118,6 +140,8 @@ namespace M3UPorter
                     grpStep3.Enabled = true;
                 }
             }
+
+            btnOutputDir.Focus();
         }
 
         private void btnOutputDir_Click(object sender, EventArgs e)
@@ -137,6 +161,7 @@ namespace M3UPorter
                 grpStep3.Enabled = true;
             }
 
+            cbPrependNum.Focus();
         }
 
         private void FrmMain_HelpButtonClicked(object sender, CancelEventArgs e)
@@ -145,28 +170,17 @@ namespace M3UPorter
             e.Cancel = true;
         }
 
-        private void switch_state()
-        {
-            // Switches from progress bar state to control state
-            grpStep1.Visible = !grpStep1.Visible;
-            grpStep2.Visible = !grpStep2.Visible;
-            grpStep3.Visible = !grpStep3.Visible;
-            pgbProgress.Visible = !pgbProgress.Visible;
-            lblProgress.Visible = !lblProgress.Visible;
-            lblProgressText.Visible = !lblProgressText.Visible;
-            pbS1D.Visible = !pbS1D.Visible;
-            pbS2D.Visible = !pbS2D.Visible;
-            pbS3A.Visible = !pbS3A.Visible;
-        }
-
         private void btnGo_Click(object sender, EventArgs ea)
         {
             SaveSettings();
 
             btnGo.Enabled = false;
+            optionsForm.Hide();
+            progressForm.Show();
+            btnStop.Focus();
+
             // First process the playlist file
             List<Pair<String, String> > tasks = new List<Pair<String, String> >();
-            switch_state();
 
             lblProgressText.Text = "reading m3u";
             try
@@ -230,39 +244,27 @@ namespace M3UPorter
                     i++;
                 }
 
-                pgbProgress.Value = 5;
+                pgbProgress.Value = 10;
             }
             catch (Exception e)
             {
                 MessageBox.Show("Error computing the destination file names: " + e.ToString());
             }
 
-            // Create a background worker to prevent "Not responsive" when writing to slow media such as USB sticks
-            BackgroundWorker bw = new BackgroundWorker();
-            bw.WorkerReportsProgress = true;
-
-
-            bw.DoWork += new DoWorkEventHandler( DoWork );
-
-            // what to do when progress changed (update the progress bar for example)
-            bw.ProgressChanged += new ProgressChangedEventHandler(
-            delegate(object o, ProgressChangedEventArgs args)
-            {
-                pgbProgress.Value = args.ProgressPercentage+10;
-                if (null != args.UserState)
-                    lblProgressText.Text = (String)args.UserState;
-            });
-
-            // what to do when worker completes its task (notify the user)
-            bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler(WorkerCompleted);
-
             bw.RunWorkerAsync(tasks);
         }
+
+        private void btnStop_Click(object sender, EventArgs e)
+        {
+            bw.CancelAsync();
+        }
+
 
         void WorkerCompleted(object o, RunWorkerCompletedEventArgs args)
         {
             btnGo.Enabled = true;
-            switch_state();
+            optionsForm.Show();
+            progressForm.Hide(); // TODO: show final results form?
 
             if (args.Cancelled)
             {
@@ -292,8 +294,14 @@ namespace M3UPorter
 
             foreach (Pair<string, string> pair in tasks)
             {
-
                 i++;
+
+                if (bw.CancellationPending)
+                {
+                    args.Cancel = true;
+                    return;
+                }
+
                 int progress = (int)(((float)i / (float)total) * 90);
                 try
                 {
@@ -333,7 +341,8 @@ namespace M3UPorter
                     File.Delete(pair.Right);
                 }
             }
-        }                
+        }
     }
+
 }
 
