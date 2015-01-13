@@ -54,6 +54,9 @@
             this.lblProgressText = new System.Windows.Forms.Label();
             this.pgbProgress = new System.Windows.Forms.ProgressBar();
             this.lblProgress = new System.Windows.Forms.Label();
+            this.endResultsForm = new System.Windows.Forms.Panel();
+            this.btnEndResultsOK = new System.Windows.Forms.Button();
+            this.txtEndReport = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.pbS1A)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbS3A)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbS3D)).BeginInit();
@@ -65,6 +68,7 @@
             this.grpStep3.SuspendLayout();
             this.optionsForm.SuspendLayout();
             this.progressForm.SuspendLayout();
+            this.endResultsForm.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnLoadFile
@@ -309,14 +313,43 @@
             this.lblProgress.TabIndex = 0;
             this.lblProgress.Text = "Please wait, performing operation...";
             // 
+            // endResultsForm
+            // 
+            this.endResultsForm.Controls.Add(this.txtEndReport);
+            this.endResultsForm.Controls.Add(this.btnEndResultsOK);
+            this.endResultsForm.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.endResultsForm.Location = new System.Drawing.Point(0, 0);
+            this.endResultsForm.Name = "endResultsForm";
+            this.endResultsForm.Size = new System.Drawing.Size(354, 387);
+            this.endResultsForm.TabIndex = 15;
+            // 
+            // btnEndResultsOK
+            // 
+            this.btnEndResultsOK.Location = new System.Drawing.Point(96, 354);
+            this.btnEndResultsOK.Name = "btnEndResultsOK";
+            this.btnEndResultsOK.Size = new System.Drawing.Size(162, 23);
+            this.btnEndResultsOK.TabIndex = 21;
+            this.btnEndResultsOK.Text = "OK";
+            this.btnEndResultsOK.UseVisualStyleBackColor = true;
+            this.btnEndResultsOK.Click += new System.EventHandler(this.btnEndResultsOK_Click);
+            // 
+            // txtEndReport
+            // 
+            this.txtEndReport.Location = new System.Drawing.Point(12, 21);
+            this.txtEndReport.Multiline = true;
+            this.txtEndReport.Name = "txtEndReport";
+            this.txtEndReport.Size = new System.Drawing.Size(330, 318);
+            this.txtEndReport.TabIndex = 22;
+            // 
             // FrmMain
             // 
             this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(354, 387);
-            this.Controls.Add(this.optionsForm);
+            this.Controls.Add(this.endResultsForm);
             this.Controls.Add(this.progressForm);
+            this.Controls.Add(this.optionsForm);
             this.HelpButton = true;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
@@ -342,6 +375,8 @@
             this.grpStep3.PerformLayout();
             this.optionsForm.ResumeLayout(false);
             this.progressForm.ResumeLayout(false);
+            this.endResultsForm.ResumeLayout(false);
+            this.endResultsForm.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -373,6 +408,9 @@
         private System.Windows.Forms.ProgressBar pgbProgress;
         private System.Windows.Forms.Label lblProgress;
         private System.Windows.Forms.Button btnStop;
+        private System.Windows.Forms.Panel endResultsForm;
+        private System.Windows.Forms.Button btnEndResultsOK;
+        private System.Windows.Forms.TextBox txtEndReport;
     }
 }
 

@@ -21,14 +21,18 @@ namespace M3UPorter
 
         readonly BackgroundWorker bw;
 
+        /// <summary>
+        /// Saved value of last progress report received from the worker thread.
+        /// </summary>
+        ProgressReport _lastProgressReport = new ProgressReport(0, 0, 0, 0);
+
         public FrmMain()
         {
             InitializeComponent();
             pbS1A.Visible = true;
             pbS2A.Visible = true;
 
-            optionsForm.Show();
-            progressForm.Hide();
+            _ShowOptionsForm();
 
             LoadSettings();
 
@@ -39,13 +43,7 @@ namespace M3UPorter
             bw.DoWork += new DoWorkEventHandler(DoWork);
 
             // what to do when progress changed (update the progress bar for example)
-            bw.ProgressChanged += new ProgressChangedEventHandler(
-            delegate(object o, ProgressChangedEventArgs args)
-            {
-                pgbProgress.Value = args.ProgressPercentage + 10;
-                if (null != args.UserState)
-                    lblProgressText.Text = (String)args.UserState;
-            });
+            bw.ProgressChanged += new ProgressChangedEventHandler(OnProgressChanged);
 
             // what to do when worker completes its task (notify the user)
             bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler(WorkerCompleted);
@@ -174,9 +172,7 @@ namespace M3UPorter
         {
             SaveSettings();
 
-            btnGo.Enabled = false;
-            optionsForm.Hide();
-            progressForm.Show();
+            _ShowProgressForm();
             btnStop.Focus();
 
             // First process the playlist file
@@ -259,26 +255,51 @@ namespace M3UPorter
             bw.CancelAsync();
         }
 
-
         void WorkerCompleted(object o, RunWorkerCompletedEventArgs args)
         {
-            btnGo.Enabled = true;
-            optionsForm.Show();
-            progressForm.Hide(); // TODO: show final results form?
+            _ShowEndResultsForm();
+            btnEndResultsOK.Focus();
 
             if (args.Cancelled)
             {
-                // The user canceled the operation. The user knows this, so don't report it.
+                txtEndReport.Text = "Cancelled!";
             }
             else if (args.Error != null)
             {
                 // There was an error during the operation. 
-                string msg = String.Format("Error: {0}", args.Error.Message);
-                MessageBox.Show(msg);
+                string msg = String.Format("Unexpected Error:\n{0}", args.Error.ToString() );
+                txtEndReport.Text = msg;
             }
             else
             {
-                MessageBox.Show("Operation complete!");
+                CopyResult copyResult = (CopyResult)args.Result;
+
+                StringBuilder reportBuilder = new StringBuilder();
+                reportBuilder.AppendLine("Operation Complete!");
+                reportBuilder.AppendLine("");
+
+                if (_lastProgressReport.FilesCopied == _lastProgressReport.TotalFiles)
+                {
+                    reportBuilder.AppendFormat( "  {0} files copied\r\n", _lastProgressReport.FilesCopied );
+                }
+                else
+                {
+                    reportBuilder.AppendFormat("  {0}/{1} files copied\r\n",
+                        _lastProgressReport.FilesCopied,
+                        _lastProgressReport.TotalFiles);
+                }
+                
+                if (_lastProgressReport.FilesSkipped > 0)
+                {
+                    reportBuilder.AppendFormat("  {0} not found\r\n", _lastProgressReport.FilesSkipped);
+                }
+
+                if (copyResult == CopyResult.OUT_OF_SPACE)
+                {
+                    reportBuilder.AppendFormat("  destination device is full.");
+                }
+                
+                txtEndReport.Text = reportBuilder.ToString();
             }
         }
 
@@ -290,11 +311,14 @@ namespace M3UPorter
             List<Pair<String,String> > tasks = (List<Pair<String,String> >)args.Argument;
             BackgroundWorker bw = o as BackgroundWorker;
             int total = tasks.Count;
-            int i = 0;
+            int nCopied = 0;
+            int nSkipped = 0;
+            int i = 0; // number of files processed
 
             foreach (Pair<string, string> pair in tasks)
             {
                 i++;
+                string lastErrorStatus = String.Empty; // TODO: enum?
 
                 if (bw.CancellationPending)
                 {
@@ -302,7 +326,6 @@ namespace M3UPorter
                     return;
                 }
 
-                int progress = (int)(((float)i / (float)total) * 90);
                 try
                 {
                     if (cbMoveFiles.Checked) // TODO: this is probably not thread safe
@@ -313,36 +336,92 @@ namespace M3UPorter
                     {
                         System.IO.File.Copy(pair.Left, pair.Right, true);
                     }
-                    bw.ReportProgress(progress, String.Format("{0}/{1}", i, total));
+                    ++nCopied;
                 }
                 catch (FileNotFoundException)
                 {
                     // Do nothing, just skip the file
-                    bw.ReportProgress(progress, String.Format("{0}/{1} (missing)", i, total));
+                    ++nSkipped;
+                }
+                catch (DirectoryNotFoundException)
+                {
+                    ++nSkipped;
                 }
                 catch (IOException ioe)
                 {
-                    bw.ReportProgress(progress, String.Format("{0}/{1} (IO error)", i, total));
-
-                    // delete the output file if it exists
+                    // delete the partial output file if it exists
                     File.Delete(pair.Right);
 
                     // If it's an "out of space" exception, exit quietly
                     if ((ioe.HResult & 0xffff) == ERROR_DISK_FULL)
-                        break;
+                    {
+                        args.Result = CopyResult.OUT_OF_SPACE;
+                        return; // ** quick exit ** Finished early.
+                    }
 
-                    throw;
+                    throw; // otherwise, exit noisily
                 }
                 catch (Exception)
                 {
-                    bw.ReportProgress(progress, String.Format("{0}/{1} (error)", i, total));
-
                     // delete the output file on the assumption that it's incomplete
                     File.Delete(pair.Right);
+                    throw;
                 }
+
+                ProgressReport report = new ProgressReport(nCopied, nSkipped, i, total );
+                bw.ReportProgress(i / total, report);
             }
+
+            args.Result = CopyResult.SUCCESS; // no exceptions or ANYTHING.
+        }
+
+        void OnProgressChanged(object o, ProgressChangedEventArgs args)
+        {
+            ProgressReport report = (ProgressReport)args.UserState;
+            if (null == report) // Huh?
+                return;
+
+            _lastProgressReport = report;
+
+            int progress = (int)(((float)report.Processed / (float)report.TotalFiles) * 90);
+            pgbProgress.Value = progress + 10;
+
+            string missingReport;
+            if (report.FilesSkipped <= 0)
+                missingReport = String.Empty;
+            else
+                missingReport = String.Format(" ({0} not found)", report.FilesSkipped);
+
+            lblProgressText.Text =
+                String.Format("{0}/{1}{2}", report.Processed, report.TotalFiles, missingReport);
+        }
+
+        private void btnEndResultsOK_Click(object sender, EventArgs e)
+        {
+            _ShowOptionsForm();
+            btnLoadFile.Focus();
+        }
+
+        void _ShowEndResultsForm()
+        {
+            optionsForm.Hide();
+            progressForm.Hide(); // TODO: show final results form?
+            endResultsForm.Show();
+        }
+
+        void _ShowOptionsForm()
+        {
+            optionsForm.Show();
+            progressForm.Hide(); // TODO: show final results form?
+            endResultsForm.Hide();
+        }
+
+        void _ShowProgressForm()
+        {
+            optionsForm.Hide();
+            progressForm.Show(); // TODO: show final results form?
+            endResultsForm.Hide();
         }
     }
-
 }
 
