@@ -15,12 +15,14 @@ namespace M3UPorter
         internal ProgressReport(int nFilesCopied,
                                 int nFilesSkipped,
                                 int nProcessed,
-                                int totalFiles)
+                                int totalFiles,
+                                string currentFileName)
         {
             FilesCopied = nFilesCopied;
             FilesSkipped = nFilesSkipped;
             Processed = nProcessed;
             TotalFiles = totalFiles;
+            CurrentFileName = currentFileName;
         }
 
         internal readonly int FilesCopied;
@@ -31,5 +33,6 @@ namespace M3UPorter
         internal readonly int FilesSkipped;
         internal readonly int Processed;
         internal readonly int TotalFiles;
+        internal readonly string CurrentFileName;
     }
 }

@@ -50,13 +50,14 @@
             this.grpStep3 = new System.Windows.Forms.GroupBox();
             this.optionsForm = new System.Windows.Forms.Panel();
             this.progressForm = new System.Windows.Forms.Panel();
+            this.lblCurrentAction = new System.Windows.Forms.Label();
             this.btnStop = new System.Windows.Forms.Button();
             this.lblProgressText = new System.Windows.Forms.Label();
             this.pgbProgress = new System.Windows.Forms.ProgressBar();
             this.lblProgress = new System.Windows.Forms.Label();
             this.endResultsForm = new System.Windows.Forms.Panel();
-            this.btnEndResultsOK = new System.Windows.Forms.Button();
             this.txtEndReport = new System.Windows.Forms.TextBox();
+            this.btnEndResultsOK = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pbS1A)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbS3A)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pbS3D)).BeginInit();
@@ -267,6 +268,7 @@
             // 
             // progressForm
             // 
+            this.progressForm.Controls.Add(this.lblCurrentAction);
             this.progressForm.Controls.Add(this.btnStop);
             this.progressForm.Controls.Add(this.lblProgressText);
             this.progressForm.Controls.Add(this.pgbProgress);
@@ -276,6 +278,14 @@
             this.progressForm.Name = "progressForm";
             this.progressForm.Size = new System.Drawing.Size(354, 387);
             this.progressForm.TabIndex = 13;
+            // 
+            // lblCurrentAction
+            // 
+            this.lblCurrentAction.Location = new System.Drawing.Point(9, 205);
+            this.lblCurrentAction.Name = "lblCurrentAction";
+            this.lblCurrentAction.Size = new System.Drawing.Size(333, 101);
+            this.lblCurrentAction.TabIndex = 21;
+            this.lblCurrentAction.Text = "action";
             // 
             // btnStop
             // 
@@ -323,6 +333,14 @@
             this.endResultsForm.Size = new System.Drawing.Size(354, 387);
             this.endResultsForm.TabIndex = 15;
             // 
+            // txtEndReport
+            // 
+            this.txtEndReport.Location = new System.Drawing.Point(12, 21);
+            this.txtEndReport.Multiline = true;
+            this.txtEndReport.Name = "txtEndReport";
+            this.txtEndReport.Size = new System.Drawing.Size(330, 318);
+            this.txtEndReport.TabIndex = 22;
+            // 
             // btnEndResultsOK
             // 
             this.btnEndResultsOK.Location = new System.Drawing.Point(96, 354);
@@ -333,22 +351,14 @@
             this.btnEndResultsOK.UseVisualStyleBackColor = true;
             this.btnEndResultsOK.Click += new System.EventHandler(this.btnEndResultsOK_Click);
             // 
-            // txtEndReport
-            // 
-            this.txtEndReport.Location = new System.Drawing.Point(12, 21);
-            this.txtEndReport.Multiline = true;
-            this.txtEndReport.Name = "txtEndReport";
-            this.txtEndReport.Size = new System.Drawing.Size(330, 318);
-            this.txtEndReport.TabIndex = 22;
-            // 
             // FrmMain
             // 
             this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(354, 387);
-            this.Controls.Add(this.endResultsForm);
             this.Controls.Add(this.progressForm);
+            this.Controls.Add(this.endResultsForm);
             this.Controls.Add(this.optionsForm);
             this.HelpButton = true;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -411,6 +421,7 @@
         private System.Windows.Forms.Panel endResultsForm;
         private System.Windows.Forms.Button btnEndResultsOK;
         private System.Windows.Forms.TextBox txtEndReport;
+        private System.Windows.Forms.Label lblCurrentAction;
     }
 }
 

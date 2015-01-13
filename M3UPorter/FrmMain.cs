@@ -24,7 +24,7 @@ namespace M3UPorter
         /// <summary>
         /// Saved value of last progress report received from the worker thread.
         /// </summary>
-        ProgressReport _lastProgressReport = new ProgressReport(0, 0, 0, 0);
+        ProgressReport _lastProgressReport = new ProgressReport(0, 0, 0, 0, String.Empty);
 
         public FrmMain()
         {
@@ -262,7 +262,11 @@ namespace M3UPorter
 
             if (args.Cancelled)
             {
-                txtEndReport.Text = "Cancelled!";
+                txtEndReport.Text = String.Format( 
+                    "Cancelled!\r\n\r\n"
+                    + "  {0}/{1} files copied\r\n",
+                    _lastProgressReport.FilesCopied,
+                    _lastProgressReport.TotalFiles );
             }
             else if (args.Error != null)
             {
@@ -318,13 +322,15 @@ namespace M3UPorter
             foreach (Pair<string, string> pair in tasks)
             {
                 i++;
-                string lastErrorStatus = String.Empty; // TODO: enum?
 
                 if (bw.CancellationPending)
                 {
                     args.Cancel = true;
                     return;
                 }
+
+                ProgressReport report = new ProgressReport(nCopied, nSkipped, i, total, pair.Right);
+                bw.ReportProgress(i / total, report);
 
                 try
                 {
@@ -367,9 +373,6 @@ namespace M3UPorter
                     File.Delete(pair.Right);
                     throw;
                 }
-
-                ProgressReport report = new ProgressReport(nCopied, nSkipped, i, total );
-                bw.ReportProgress(i / total, report);
             }
 
             args.Result = CopyResult.SUCCESS; // no exceptions or ANYTHING.
@@ -394,6 +397,8 @@ namespace M3UPorter
 
             lblProgressText.Text =
                 String.Format("{0}/{1}{2}", report.Processed, report.TotalFiles, missingReport);
+
+            lblCurrentAction.Text = Path.GetFileName( report.CurrentFileName );
         }
 
         private void btnEndResultsOK_Click(object sender, EventArgs e)
